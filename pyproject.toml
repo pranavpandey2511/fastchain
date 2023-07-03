@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "fastchain"
+version = "0.1.0"
+description = "Fastchain is a wrapper library around langchain for building LLM powered apps quickly and integrating it with you existing apps"
+authors = ["Pranav Pandey <pranavpandey2511@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+langchain = "^0.0.221"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
