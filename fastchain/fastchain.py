@@ -14,7 +14,13 @@ class FastChainApp:
     def _handle_query():
         pass
 
-    def store_data(self, data_type, **kwrags):
+    def store_data(self, type, **kwrags):
+        pass
+
+    def get_prompt(self, type):
+        pass
+    
+    def get_agent(self, type):
         pass
 
     def query(self):

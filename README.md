@@ -1,8 +1,10 @@
-# Fastchain - Fastest way to build LLM powered agents
+# 🚀 🔗 Fastchain - Fastest way to build LLM powered agents
 
 Fastchain is a wrapper library around Langchain which helps you build LLM powered agents faster and integrate it with your existing applications.
 
 ## Getting Started
+
+---
 
 ### Installation
 
@@ -41,6 +43,8 @@ app.add_data("website", "https://www.pranavpandey2511.github.io", page_limit=50)
 app.index()
 ```
 
+---
+
 ## Examples
 
 Let's say you want to build a simple chatbot for your website, here's how you can do that with fastchain:
@@ -62,9 +66,15 @@ app.index()
 ## Roadmap
 
 - [x] Data connectors
-- [] Agents
+- [ ] Vector DBs
+  - [ ] Qdrant
+  - [ ] Weaviate
+  - [ ] Pinecone
+  - [ ] ChromaDB
+- [ ] Agents
+- [ ] Custom Agents
 
-## Custom Settings
+## Customisation
 
 ### Custom Dataloaders
 

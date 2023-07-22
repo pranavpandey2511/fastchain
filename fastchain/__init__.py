@@ -1,1 +1,1 @@
-from fastchain.fastchain import FastChainApp
+__version__ = "0.1.0"

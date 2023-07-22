@@ -3,10 +3,10 @@ from typing import List, Union
 from base_loader import BaseDataloader
 
 
-class PdfLoader(BaseDataloader):
+class PdfDataLoader(BaseDataloader):
     def __init__(self, paths: Union[str, List]) -> None:
         """Load any pdf file from url or local path (defaults to local path).
-        
+
         Args:
             path (srt): Path to the pdf file (local or url)
         """
@@ -16,7 +16,6 @@ class PdfLoader(BaseDataloader):
             for path in self.paths:
                 self.loader = PyPDFLoader(path)
                 self.output = []
-        
 
     def load_data(self) -> List:
         """
@@ -35,7 +34,6 @@ class PdfLoader(BaseDataloader):
                 }
             )
         return output
-    
 
     def _verify_data(self) -> bool:
         """Verify data consistency
@@ -46,6 +44,6 @@ class PdfLoader(BaseDataloader):
         Returns:
             Boolean: Returns True if data is consistent
         """
-        
+
         if not len(self.data):
             raise ValueError("No pages found in the PDF !")
