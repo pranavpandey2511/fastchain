@@ -13,14 +13,14 @@ setup(
     long_description=project_description,
     long_description_content_type="text/markdown",
     url="https://github.com/pranavpandey2511/fastchain",
-    package_dir={"": "app"},
-    packages=find_packages(where="app"),
+    package_dir={},
+    packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    py_modules=[
+    install_requires=[
         "langchain>=0.0.239",
         # vector dbs
         "vectordb",
@@ -46,7 +46,6 @@ setup(
         "requests",
     ],
     python_requires=">=3.9",
-    install_require=["langchain >= 0.0.221"],
-    extra_requires={"dev": ["pytest>=7.0", "twine>=4.0.2"]},
+    extras_require={"dev": ["pytest>=7.0", "twine>=4.0.2"]},
     license="MIT",
 )

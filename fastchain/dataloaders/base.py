@@ -2,12 +2,7 @@ from abc import ABC, abstractmethod
 from uuid import uuid4
 from pydantic import BaseModel
 from typing import Optional, Union, List, Tuple, Dict, Type
-
-
-class Document(BaseModel):
-    _id: uuid4()
-    data: str
-    metadata: Dict
+import os
 
 
 class BaseDataloader(ABC):
@@ -27,3 +22,14 @@ class BaseDataloader(ABC):
     @abstractmethod
     def _verify_data(self):
         pass
+
+    def _get_dirs(self, path: str) -> List[str]:
+        """Get all the directories in a path
+
+        Args:
+            path (str): Path to the directory
+
+        Returns:
+            List[str]: List of directories
+        """
+        return [x[0] for x in os.walk(path)]

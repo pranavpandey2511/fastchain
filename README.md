@@ -1,6 +1,8 @@
 # 🚀 🔗 Fastchain - Fastest way to build LLM powered agents
 
-Fastchain is a wrapper library around Langchain which helps you build LLM powered agents faster and integrate it with your existing applications.
+`FASTCHAIN is work in progress!!`
+
+Fastchain is a librarywhich helps you build production grade LLM powered agents faster and integrate it with your existing applications.
 
 ## Getting Started
 
