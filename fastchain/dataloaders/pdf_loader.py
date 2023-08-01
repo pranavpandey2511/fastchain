@@ -1,11 +1,11 @@
-from langchain.document_loaders import PyPDFLoader, PyMuPDFLoader
 from typing import List, Union
-from base_loader import BaseDataloader
+from .base import Dataloader
 import os
 from pathlib import Path
+import fitz
 
 
-class PdfDataLoader(BaseDataloader):
+class PdfDataLoader(Dataloader):
     def __init__(
         self,
         path: Union[str, List],
