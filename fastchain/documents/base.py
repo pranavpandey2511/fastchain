@@ -1,9 +1,9 @@
-from __future__ import annotationsa
+from __future__ import annotations
 
 from pydantic import BaseModel, ValidationError, validator, Field
 from typing import List, Dict, Union, Optional, Type, Any
 import uuid
-from docarray import BaseDoc
+from docarray import BaseDoc, DocVec, DocList
 from docarray.typing import (
     NdArray,
     NdArrayEmbedding,
@@ -38,13 +38,11 @@ class Document(BaseDoc):
         alias="doc_id",
     )
     summary: Optional[str]
+    pages: DocList[Page]
+    sections: DocList[Section]
     page_ids: List[uuid.UUID] = Field(default_factory=list)
     section_ids: List[uuid.UUID] = Field(default_factory=list)
-    metadata: Field(
-        default_factory=dict,
-        description="Metadata of the document.",
-        alias="meta",
-    )
+    metadata: Metadata
 
 
 class Page(BaseDoc):
