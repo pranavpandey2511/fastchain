@@ -2,7 +2,7 @@ from typing import List, Union, Optional, Dict
 from pathlib import Path
 import fitz
 from unidecode import unidecode
-from .base import BaseDataloader
+from .base import Dataloader
 
 class PyPDFLoader:
     def __init__(self, file_path: Union[str, Path], include_metadata: bool = True, extra_info: Optional[Dict] = None):
@@ -42,7 +42,7 @@ class PyPDFLoader:
 
 
 
-class PdfDataLoader(BaseDataloader):
+class PdfDataLoader(Dataloader):
     def __init__(
         self,
         path: Union[str, List[str], Path, List[Path]],
