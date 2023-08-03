@@ -4,7 +4,7 @@ import fitz
 from unidecode import unidecode
 from .base import Dataloader
 
-class PyPDFLoader:
+class PyPDFLoader(Dataloader):
     def __init__(self, file_path: Union[str, Path], include_metadata: bool = True, extra_info: Optional[Dict] = None):
         if not isinstance(file_path, (str, Path)):
             raise TypeError("file_path must be a string or Path.")
