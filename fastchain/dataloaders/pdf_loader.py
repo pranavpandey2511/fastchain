@@ -1,6 +1,8 @@
 from typing import List, Union, Optional, Dict
 from pathlib import Path
 import fitz
+from unidecode import unidecode
+from .base import BaseDataloader
 
 class PyPDFLoader:
     def __init__(self, file_path: Union[str, Path], include_metadata: bool = True, extra_info: Optional[Dict] = None):
@@ -16,15 +18,31 @@ class PyPDFLoader:
         except Exception as e:
             raise Exception(f"Failed to open {file_path}: {str(e)}")
 
-    def load_and_split(self) -> List[Dict]:
+    def load_and_split(self) -> Dict:
+        pages_content = []
         if self.include_metadata:
             self.extra_info["total_pages"] = len(self.doc)
             self.extra_info["file_path"] = str(self.file_path)
-            return [{"content": page.get_text(), "extra_info": dict(self.extra_info, **{"source": f"{page.number+1}"})} for page in self.doc]
-        else:
-            return [{"content": page.get_text(), "extra_info": self.extra_info} for page in self.doc]
+        for page_number, page in enumerate(self.doc):
+            page_content = []
+            output = page.get_text("blocks")
+            previous_block_id = 0
+            for block in output:
+                if block[6] == 0:  # We only take the text
+                    block_decoded = unidecode(block[4])
+                    content_block = {"content": block_decoded}
+                    if self.include_metadata:
+                        content_block["extra_info"] = dict(self.extra_info, **{"source": f"{page_number+1}", "block_no": block[5]})
+                    if previous_block_id != block[5]:
+                        content_block["new_block"] = True
+                        previous_block_id = block[5]
+                    page_content.append(content_block)
+            pages_content.append(page_content)
+        return {str(self.file_path): pages_content}
 
-class PdfDataLoader:
+
+
+class PdfDataLoader(BaseDataloader):
     def __init__(
         self,
         path: Union[str, List[str], Path, List[Path]],
@@ -55,14 +73,17 @@ class PdfDataLoader:
 
         return [file for file in pdf_files if file not in self.exclude]
 
-    def load_data(self) -> List[Dict[str, Union[str, List[Dict]]]]:
-        output = [{"file": file_path, "data": loader.load_and_split()} for file_path, loader in self.loaders.items()]
+    def load_data(self) -> Dict:
+        output = {}
+        for file_path, loader in self.loaders.items():
+            output.update(loader.load_and_split())
         self._verify_data(output)
         return output
 
-    def _verify_data(self, data: List[Dict[str, Union[str, List[Dict]]]]) -> bool:
-        if not any(item["data"] for item in data):
-            raise ValueError("No pages found in the PDF files")
+
+    def _verify_data(self, data: List[Dict]) -> bool:
+        if not any(data):
+            raise ValueError("No pages found in the PDF file")
         return True
 
     @staticmethod
