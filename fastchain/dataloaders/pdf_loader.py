@@ -1,130 +1,92 @@
-from typing import List, Union
-from .base import Dataloader
-import os
+from typing import List, Union, Optional, Dict
 from pathlib import Path
 import fitz
+from unidecode import unidecode
+from .base import Dataloader
+
+class PyPDFLoader(Dataloader):
+    def __init__(self, file_path: Union[str, Path], include_metadata: bool = True, extra_info: Optional[Dict] = None):
+        if not isinstance(file_path, (str, Path)):
+            raise TypeError("file_path must be a string or Path.")
+
+        self.file_path = file_path
+        self.include_metadata = include_metadata
+        self.extra_info = extra_info if extra_info else {}
+
+        try:
+            self.doc = fitz.open(str(file_path))
+        except Exception as e:
+            raise Exception(f"Failed to open {file_path}: {str(e)}")
+
+    def load_and_split(self) -> Dict:
+        pages_content = []
+        if self.include_metadata:
+            self.extra_info["total_pages"] = len(self.doc)
+            self.extra_info["file_path"] = str(self.file_path)
+        for page_number, page in enumerate(self.doc):
+            page_content = []
+            output = page.get_text("blocks")
+            previous_block_id = 0
+            for block in output:
+                if block[6] == 0:  # We only take the text
+                    block_decoded = unidecode(block[4])
+                    content_block = {"content": block_decoded}
+                    if self.include_metadata:
+                        content_block["extra_info"] = dict(self.extra_info, **{"source": f"{page_number+1}", "block_no": block[5]})
+                    if previous_block_id != block[5]:
+                        content_block["new_block"] = True
+                        previous_block_id = block[5]
+                    page_content.append(content_block)
+            pages_content.append(page_content)
+        return {str(self.file_path): pages_content}
+
 
 
 class PdfDataLoader(Dataloader):
     def __init__(
         self,
-        path: Union[str, List],
+        path: Union[str, List[str], Path, List[Path]],
         recursive: bool = True,
+        include_metadata: bool = True,
         *,
         exclude: List[str] = [],
     ) -> None:
-        """Load any pdf file from url or local path (defaults to local path).
+        self.path = path if isinstance(path, list) else [path]
+        self.recursive = recursive
+        self.include_metadata = include_metadata
+        self.exclude = exclude
 
-        Args:
-            path (srt): Path to the pdf file (local or url)
-        """
+        pdf_files = self._get_pdf_files()
+        self.loaders = {str(file_path): PyPDFLoader(file_path, include_metadata) for file_path in pdf_files}
 
-        self.path = path
-        if isinstance(self.paths, List):
-            for file_path in self.path:
-                if file_path.endswith(".pdf"):
-                    self.loader = PyPDFLoader(file_path)
-                    self.output = []
+    def _get_pdf_files(self) -> List[Union[str, Path]]:
+        pdf_files = []
+        for file_path in self.path:
+            path = Path(file_path)
+            if self._check_dir(file_path):
+                if self.recursive:
+                    pdf_files.extend([str(p) for p in path.rglob("*.pdf")])
+                else:
+                    pdf_files.extend([str(p) for p in path.glob("*.pdf")])
+            elif path.is_file() and path.suffix == ".pdf":
+                pdf_files.append(str(path))
 
-    def _create_loaders(self):
-        """Create separate loaders for each file. If the path is a directory, create a loader for each file in the directory. If option is set to be recursive, do it recursively for each pdf file in every folder, make sure that paths that are excluded (directory or filepath) should not be loded."""
-        if self._check_dir(self.path):
-            if self.recursive:
-                for root, dirs, files in os.walk(self.path):
-                    for file in files:
-                        if file.endswith(".pdf"):
-                            if file not in self.exclude:
-                                self.loader = PyPDFLoader(file)
-                                self.output = []
-            else:
-                for file in os.listdir(self.path):
-                    if file.endswith(".pdf"):
-                        if file not in self.exclude:
-                            self.loader = PyPDFLoader(file)
-                            self.output = []
+        return [file for file in pdf_files if file not in self.exclude]
 
-    def load_data(self) -> List:
-        """
-        Load pdf file and split it into pages and documents
-        """
-        self.data = self.loader.load_and_split()
-        for page in self.data:
-            content = page.page_content
-            content = clean_string(content)
-            meta_data = page.metadata
-            meta_data["url"] = url
-            output.append(
-                {
-                    "content": content,
-                    "meta_data": meta_data,
-                }
-            )
+    def load_data(self) -> Dict:
+        output = {}
+        for file_path, loader in self.loaders.items():
+            output.update(loader.load_and_split())
+        self._verify_data(output)
         return output
 
-    def _verify_data(self) -> bool:
-        """Verify data consistency
 
-        Raises:
-            ValueError: Raise Value Error if data is inconsistent
-
-        Returns:
-            Boolean: Returns True if data is consistent
-        """
-
-        if not len(self.data):
+    def _verify_data(self, data: List[Dict]) -> bool:
+        if not any(data):
             raise ValueError("No pages found in the PDF file")
+        return True
 
     @staticmethod
     def _check_dir(path: str) -> bool:
-        """Given the path check if the path is a directory or not using pathlib
-
-        Args:
-            path (str): path to the directory/file
-        """
         path = Path(path)
-        if path.is_dir():
-            return True
-        else:
-            return False
-
-
-def _pymupdf_loader():
-    # The import name for this library is fitz
-    import fitz
-
-    # Create a document object
-    doc = fitz.open("file.pdf")  # or fitz.Document(filename)
-
-    # Extract the number of pages (int)
-    print(doc.page_count)
-
-    # the metadata (dict) e.g., the author,...
-    print(doc.metadata)
-
-    # Get the page by their index
-    page = doc.load_page(0)
-    # or page = doc[0]
-
-    # read a Page
-    text = page.get_text()
-    print(text)
-
-    # Render and save the page as an image
-    pix = page.get_pixmap()
-    pix.save(f"page-{page.number}.png")
-
-    # get all links on a page
-    links = page.get_links()
-    print(links)
-
-    # Render and save all the pages as images
-    for i in range(doc.page_count):
-        page = doc.load_page(i)
-        pix = page.get_pixmap()
-        pix.save("page-%i.png" % page.number)
-
-    # get the links on all pages
-    for i in range(doc.page_count):
-        page = doc.load_page(i)
-        link = page.get_links()
-        print(link)
+        return path.is_dir()
