@@ -4,6 +4,7 @@ from typing import Callable, List, Optional, Tuple, Dict
 
 EMB_TYPE = List[float]
 
+
 class BaseEmbedding(ABC):
     def __init__(self, tokenizer: Optional[Callable] = None) -> None:
         self._total_tokens_used = 0
@@ -32,14 +33,20 @@ class BaseEmbedding(ABC):
 
     def get_queued_text_embeddings(self) -> Dict[str, EMB_TYPE]:
         """Retrieve embeddings for all queued texts."""
-        result = {text_id: self.get_embedding(text) for text_id, text in self._text_queue}
-        self._text_queue.clear() 
+        result = {
+            text_id: self.get_embedding(text)
+            for text_id, text in self._text_queue
+        }
+        self._text_queue.clear()
         return result
 
     async def aget_queued_text_embeddings(self) -> Dict[str, EMB_TYPE]:
         """Asynchronous version of get_queued_text_embeddings."""
-        result = {text_id: await self.aget_embedding(text) for text_id, text in self._text_queue}
-        self._text_queue.clear() 
+        result = {
+            text_id: await self.aget_embedding(text)
+            for text_id, text in self._text_queue
+        }
+        self._text_queue.clear()
         return result
 
     @property

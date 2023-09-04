@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, ValidationError, validator, Field
-from typing import List, Dict, Union, Optional, Type, Any
+from typing import List, Dict, Optional, Type, Any
 import uuid
-from docarray import BaseDoc, DocVec, DocList
+from docarray import BaseDoc, DocList
 from docarray.typing import (
     NdArray,
     NdArrayEmbedding,
@@ -28,7 +28,7 @@ from docarray.typing import (
     AudioBytes,
 )
 
-from sections import Section
+from sections.base import Section
 
 
 class Document(BaseDoc):
@@ -37,12 +37,11 @@ class Document(BaseDoc):
         description="Unique ID of the document.",
         alias="doc_id",
     )
-    summary: Optional[str]
+    summary: Optional[str] = "NA"
     pages: DocList[Page]
     sections: DocList[Section]
-    page_ids: List[uuid.UUID] = Field(default_factory=list)
-    section_ids: List[uuid.UUID] = Field(default_factory=list)
     metadata: Metadata
+    pdf_metadata: Optional[Dict] = None
 
 
 class Page(BaseDoc):
@@ -58,7 +57,7 @@ class Page(BaseDoc):
 
     def __init__(self, page_number: int):
         self.page_number: int = page_number
-        self.sections: List[Section] = []
+        self.sections: DocList[Section] = []
 
     def __str__(self):
         return "\n\n------------\n\n".join(
@@ -70,6 +69,7 @@ class Metadata(BaseDoc):
     """Metadata class for documents."""
 
     url: Optional[str] = None
+    total_pages: Optional[int] = None
     version: Optional[str] = None
     record_locator: Optional[
         Dict[str, Any]
@@ -78,9 +78,12 @@ class Metadata(BaseDoc):
     date_modified: Optional[str] = None
     date_processed: Optional[str] = None
 
-    def to_dict(self):
+    def to_dict(self) -> Dict:
         return {
             key: value
             for key, value in self.__dict__.items()
             if value is not None
         }
+
+    def __str__(self) -> str:
+        return str(self.to_dict())

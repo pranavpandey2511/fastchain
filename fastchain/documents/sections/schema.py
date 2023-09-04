@@ -23,6 +23,7 @@ from docarray.typing import (
     AudioBytes,
 )
 from pydantic import Field
+from typing import Optional, Tuple, Dict, List
 
 
 class Text(Section):
@@ -30,6 +31,7 @@ class Text(Section):
 
     content_type: str = "plaintext"
     content: str = Field(default_factory=str)
+    coordinates: Optional[Tuple]
 
     def __str__(self):
         return self.content
@@ -40,6 +42,8 @@ class Image(Section):
 
     content_type: str = "image"
     content: ImageBytes = Field(default_factory=ImageBytes)
+    embedding: Optional[NdArrayEmbedding]
+    coordinates: Optional[Tuple]
 
 
 class Video(Section):
@@ -47,6 +51,8 @@ class Video(Section):
 
     content_type: str = "video"
     content: VideoBytes = Field(default_factory=VideoBytes)
+    embedding: Optional[NdArrayEmbedding]
+    coordinates: Optional[Tuple]
 
 
 class Audio(Section):
@@ -54,6 +60,7 @@ class Audio(Section):
 
     content_type: str = "audio"
     content: AudioBytes = Field(default_factory=AudioBytes)
+    embedding: Optional[NdArrayEmbedding]
 
 
 class FigureCaption(Text):

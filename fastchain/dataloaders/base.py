@@ -5,7 +5,7 @@ from typing import Optional, Union, List, Tuple, Dict, Type
 import os
 
 
-class Dataloader(ABC):
+class BaseDataloader(ABC):
     """Base dataloader class for creating dataloaders
 
     Args:
