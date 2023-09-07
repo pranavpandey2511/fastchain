@@ -12,17 +12,14 @@ from tenacity import (
 from fastchain.embeddings.base import DEFAULT_EMBED_BATCH_SIZE, BaseEmbedding
 from fastchain.llms.openai_utils import validate_openai_api_key
 
-
 class OpenAIEmbeddingMode(str, Enum):
     """OpenAI embedding mode."""
-
     SIMILARITY_MODE = "similarity"
     TEXT_SEARCH_MODE = "text_search"
 
 
 class OpenAIEmbeddingModelType(str, Enum):
     """OpenAI embedding model type."""
-
     DAVINCI = "davinci"
     CURIE = "curie"
     BABBAGE = "babbage"
