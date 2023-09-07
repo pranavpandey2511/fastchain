@@ -4,6 +4,7 @@ from typing import List, Dict, Union, Optional, Type, Any
 import uuid
 from pydantic import BaseModel, Field, validator, ValidationError
 from docarray import BaseDoc
+from docarray.typing import NdArray, NdArrayEmbedding
 
 
 class Section(BaseDoc):
@@ -12,7 +13,7 @@ class Section(BaseDoc):
         description="Unique ID of the node.",
         alias="doc_id",
     )
-    document_id: uuid.UUID
+    embedding: Optional[NdArrayEmbedding]
     content: str
-    previous: Type[Section] = None
-    next: Type[Section] = None
+    previous: Union[Type[Section], None] = None
+    next: Union[Type[Section], None] = None

@@ -1,11 +1,40 @@
 from typing import List, Union, Optional, Dict
+from enum import Enum
 from pathlib import Path
+import uuid
 import fitz
+import os
 from unidecode import unidecode
-from .base import Dataloader
+from datetime import datetime
+import logging
 
-class PyPDFLoader(Dataloader):
-    def __init__(self, file_path: Union[str, Path], include_metadata: bool = True, extra_info: Optional[Dict] = None):
+from fastchain.dataloaders.text_chunker.token_chunker import chunk_text_by_token_limit
+
+from .base import BaseDataloader
+from docarray.array import DocList, DocVec
+from fastchain.documents.base import Document, Page, Metadata
+from fastchain.documents.sections.schema import Text, Image, FigureCaption
+from utils import num_tokens_from_string, is_valid_url
+
+logger = logging.getLogger(__name__)
+
+
+class Chunking(Enum):
+    STRUCTURED = 1
+    SENTENCES = 2
+    FIXED_SIZE = 3
+
+
+class PyPDFLoader(BaseDataloader):
+    def __init__(
+        self,
+        file_path: Union[str, Path],
+        include_metadata: bool = True,
+        extra_info: Optional[Dict] = None,
+        *,
+        token_limit=512,
+        **kwargs,
+    ):
         if not isinstance(file_path, (str, Path)):
             raise TypeError("file_path must be a string or Path.")
 
@@ -13,36 +42,63 @@ class PyPDFLoader(Dataloader):
         self.include_metadata = include_metadata
         self.extra_info = extra_info if extra_info else {}
 
+        self.summary = ""
+        self.pages = DocList()
+        self.sections = DocList()
+        self.token_limit = token_limit
+
         try:
             self.doc = fitz.open(str(file_path))
         except Exception as e:
             raise Exception(f"Failed to open {file_path}: {str(e)}")
 
-    def load_and_split(self) -> Dict:
-        pages_content = []
-        if self.include_metadata:
-            self.extra_info["total_pages"] = len(self.doc)
-            self.extra_info["file_path"] = str(self.file_path)
+        self.metadata = Metadata(
+            url=file_path,
+            version=kwargs.get("version", "0.0.0"),
+            total_pages=self.doc.page_count,
+            date_created=datetime.now(),
+            data_modified=datetime.now(),
+            date_processed=datetime.now(),
+        )
+
+    def load_and_split(self) -> Document:
+        self.pdf_metadata = self.doc.metadata
+
         for page_number, page in enumerate(self.doc):
             page_content = []
             output = page.get_text("blocks")
             previous_block_id = 0
             for block in output:
-                if block[6] == 0:  # We only take the text
-                    block_decoded = unidecode(block[4])
-                    content_block = {"content": block_decoded}
-                    if self.include_metadata:
-                        content_block["extra_info"] = dict(self.extra_info, **{"source": f"{page_number+1}", "block_no": block[5]})
-                    if previous_block_id != block[5]:
-                        content_block["new_block"] = True
-                        previous_block_id = block[5]
-                    page_content.append(content_block)
-            pages_content.append(page_content)
-        return {str(self.file_path): pages_content}
+                # The first four entries are the block’s bbox coordinates, block_type is 1 for an image block, 0 for text. 
+                # block_no is the block sequence number. Multiple text lines are joined via line breaks.
+                x0, y0, x1, y1, block_data, block_num, block_type = block
+                coordinates = x0, y0, x1, y1
+                if block_type != 0: # Not text
+                    continue
+                
+                text_block = unidecode(block_data)
+                
+                # Get number of tokens in the content
+                num_tokens = num_tokens_from_string(text_block)
+                text_chunks = chunk_text_by_token_limit(text_block, self.token_limit)
+
+                for chunk in text_chunks:
+                    self.sections.append(Text(content=chunk))
+            self.pages.append(
+                Page(page_number=page_number), sections=self.sections
+            )
+
+        return {
+            str(self.file_path): Document(
+                pages=self.pages,
+                sections=self.sections,
+                metadata=self.metadata,
+                pdf_metadata=self.pdf_metadata,
+            )
+        }
 
 
-
-class PdfDataLoader(Dataloader):
+class PdfDataLoader(BaseDataloader):
     def __init__(
         self,
         path: Union[str, List[str], Path, List[Path]],
@@ -50,6 +106,8 @@ class PdfDataLoader(Dataloader):
         include_metadata: bool = True,
         *,
         exclude: List[str] = [],
+        chunking=Chunking.STRUCTURED,
+        **kwargs,
     ) -> None:
         self.path = path if isinstance(path, list) else [path]
         self.recursive = recursive
@@ -57,7 +115,10 @@ class PdfDataLoader(Dataloader):
         self.exclude = exclude
 
         pdf_files = self._get_pdf_files()
-        self.loaders = {str(file_path): PyPDFLoader(file_path, include_metadata) for file_path in pdf_files}
+        self.loaders = {
+            str(file_path): PyPDFLoader(file_path, include_metadata)
+            for file_path in pdf_files
+        }
 
     def _get_pdf_files(self) -> List[Union[str, Path]]:
         pdf_files = []
@@ -78,13 +139,22 @@ class PdfDataLoader(Dataloader):
         for file_path, loader in self.loaders.items():
             output.update(loader.load_and_split())
         self._verify_data(output)
-        return output
 
+        self.document = Document(
+            summary=self.summary,
+            pages=self.pages,
+            sections=self.sections,
+            metadata=self.metadata,
+        )
 
-    def _verify_data(self, data: List[Dict]) -> bool:
-        if not any(data):
-            raise ValueError("No pages found in the PDF file")
-        return True
+        return self.document
+
+    def _verify_data(self, data: Dict) -> bool:
+        for file_path, content in data.items():
+            if os.path.exists(file_path)
+            if not any(content):
+                raise ValueError("No pages found in the PDF file")
+            return True
 
     @staticmethod
     def _check_dir(path: str) -> bool:
