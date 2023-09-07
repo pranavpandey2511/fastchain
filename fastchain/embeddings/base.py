@@ -1,10 +1,10 @@
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Callable, List, Optional, Tuple, Dict
+from typing import Callable, Optional, Tuple, Dict, List
+import numpy as np
 
-EMB_TYPE = List[float]
-
-
+EMB_TYPE = np.ndarray
+DEFAULT_EMBED_BATCH_SIZE = 10
 class BaseEmbedding(ABC):
     def __init__(self, tokenizer: Optional[Callable] = None) -> None:
         self._total_tokens_used = 0
