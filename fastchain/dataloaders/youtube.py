@@ -1,5 +1,5 @@
 from langchain.document_loaders import YoutubeLoader
-from base_loader import BaseDataloader
+from base import BaseDataloader
 
 class YoutubeDataLoader(BaseDataloader):
     """Yotube dataloader

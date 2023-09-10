@@ -35,6 +35,7 @@ python-docx = "^0.8.11"
 sphinx = "^7.2.4"
 tree-sitter = "^0.20.1"
 tiktoken = "^0.4.0"
+nltk = "^3.8.1"
 
 
 [build-system]
