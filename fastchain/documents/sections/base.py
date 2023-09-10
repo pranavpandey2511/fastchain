@@ -13,7 +13,10 @@ class Section(BaseDoc):
         description="Unique ID of the node.",
         alias="doc_id",
     )
-    embedding: Optional[NdArrayEmbedding]
+    EMBEDDING_SIZE: int
+    embedding: Optional[NdArrayEmbedding[EMBEDDING_SIZE]] = Field(
+        is_embedding=True
+    )
     content: str
     previous: Union[Type[Section], None] = None
     next: Union[Type[Section], None] = None

@@ -1,3 +1,6 @@
+![GitHub Repo stars](https://img.shields.io/github/stars/pranavpandey2511/fastchain?logo=github)
+![Discord](https://img.shields.io/discord/1127131856911994971?style=flat&logo=discord&label=Fastchain&link=https%3A%2F%2Fdiscord.gg%2FsVz5sa97Xk)
+
 # 🚀 🔗 Fastchain - Fastest way to build LLM powered agents
 
 `FASTCHAIN is work in progress!!`
@@ -5,6 +8,9 @@
 Fastchain is a librarywhich helps you build production grade LLM powered agents faster and integrate it with your existing applications.
 
 ## Getting Started
+
+1. First step is to edit the .env.example file, rename the file to just .env (remove .example from the filename)
+2. Get your openai api key and set the value in .env file by replace <ENTER_YOUR_API_KEY> with your api key
 
 ---
 
@@ -46,6 +52,18 @@ app.index()
 ```
 
 ---
+
+## High Level APIs
+
+fastchain provides you with multiple high level APIs, we will explain them one by one how and where you can use each one.
+
+### Fastchain
+
+`fastchain` the highest level api that you can use to get started
+
+```
+from chainsaw import fastchain
+```
 
 ## Examples
 

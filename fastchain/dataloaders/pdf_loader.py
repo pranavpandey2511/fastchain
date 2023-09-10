@@ -8,8 +8,9 @@ from unidecode import unidecode
 from datetime import datetime
 import logging
 
-from fastchain.dataloaders.text_chunker.token_chunker import chunk_text_by_token_limit
-
+from fastchain.dataloaders.chunkers.token_chunker import (
+    chunk_text_by_token_limit,
+)
 from .base import BaseDataloader
 from docarray.array import DocList, DocVec
 from fastchain.documents.base import Document, Page, Metadata
@@ -69,18 +70,20 @@ class PyPDFLoader(BaseDataloader):
             output = page.get_text("blocks")
             previous_block_id = 0
             for block in output:
-                # The first four entries are the block’s bbox coordinates, block_type is 1 for an image block, 0 for text. 
+                # The first four entries are the block’s bbox coordinates, block_type is 1 for an image block, 0 for text.
                 # block_no is the block sequence number. Multiple text lines are joined via line breaks.
                 x0, y0, x1, y1, block_data, block_num, block_type = block
                 coordinates = x0, y0, x1, y1
-                if block_type != 0: # Not text
+                if block_type != 0:  # Not text
                     continue
-                
+
                 text_block = unidecode(block_data)
-                
+
                 # Get number of tokens in the content
                 num_tokens = num_tokens_from_string(text_block)
-                text_chunks = chunk_text_by_token_limit(text_block, self.token_limit)
+                text_chunks = chunk_text_by_token_limit(
+                    text_block, self.token_limit
+                )
 
                 for chunk in text_chunks:
                     self.sections.append(Text(content=chunk))
@@ -151,10 +154,12 @@ class PdfDataLoader(BaseDataloader):
 
     def _verify_data(self, data: Dict) -> bool:
         for file_path, content in data.items():
-            if os.path.exists(file_path)
-            if not any(content):
-                raise ValueError("No pages found in the PDF file")
-            return True
+            if os.path.exists(file_path):
+                if not any(content):
+                    raise ValueError("No pages found in the PDF file")
+                return True
+            else:
+                raise ValueError(f"File doesn't exist {file_path}")
 
     @staticmethod
     def _check_dir(path: str) -> bool:
