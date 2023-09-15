@@ -13,8 +13,8 @@ from fastchain.dataloaders.chunkers.token_chunker import (
 )
 from .base import BaseDataloader
 from docarray.array import DocList, DocVec
-from fastchain.documents.base import Document, Page, Metadata
-from fastchain.documents.sections.schema import Text, Image, FigureCaption
+from fastchain.document.base import Document, Page, Metadata
+from fastchain.document.chunk.schema import Text, Image, FigureCaption
 from utils import num_tokens_from_string, is_valid_url
 
 logger = logging.getLogger(__name__)

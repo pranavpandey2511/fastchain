@@ -1,12 +1,45 @@
 import re
 import os
 import base64
+import mimetypes
 from typing import List, Dict, Optional, Union
 
 
-def is_url(text: str) -> bool:
+def is_url(string: str) -> bool:
     url_pattern = "/(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?\/[a-zA-Z0-9]{2,}|((https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?)|(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})?"
-    return bool(re.match(url_pattern, text))
+    return bool(re.match(url_pattern, string))
+
+
+def is_base64(string: str) -> bool:
+    base64_pattern = "^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{4}|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{2}={2})$"
+    return bool(re.match(base64_pattern, string))
+
+
+def image_to_base64(file_path: str) -> str:
+    try:
+        with open(file_path, "rb") as file:
+            file_data = file.read()
+            base64_data = base64.b64encode(file_data).decode("utf-8")
+            mime_type = get_mimetype(file_path)
+            base64_string = f"data:{mime_type};base64,{base64_data}"
+            return base64_string
+    except Exception as error:
+        raise Exception(f"Image to base64 error: {str(error)}")
+
+
+def omit(d: Dict, key: str) -> Dict:
+    if d is None:
+        return {}
+    return {k: v for k, v in d.items() if k != key}
+
+
+def filter_args(**kwargs):
+    return {k: v for k, v in kwargs.items() if v is not None}
+
+
+def get_mimetype(file_path: str):
+    mime_type, encoding = mimetypes.guess_type(file_path)
+    return mime_type or "application/octet-stream"
 
 
 def preprocess_text(text: str) -> str:

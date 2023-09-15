@@ -5,7 +5,7 @@ from docarray.index.backends.weaviate import (
 import os
 from dotenv import load_dotenv
 
-from fastchain.documents.sections.base import Section
+from fastchain.document.chunk.base import Section
 from fastchain.indexers.base import VectorStore
 
 
