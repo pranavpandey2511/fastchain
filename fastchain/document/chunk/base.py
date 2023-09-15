@@ -7,16 +7,17 @@ from docarray import BaseDoc
 from docarray.typing import NdArray, NdArrayEmbedding
 
 
-class Section(BaseDoc):
+class Chunk(BaseDoc):
     _id: str = Field(
         default_factory=lambda: str(uuid.uuid4()),
-        description="Unique ID of the node.",
-        alias="doc_id",
+        description="Unique ID of the chunk.",
+        alias="chunk_id",
     )
-    EMBEDDING_SIZE: int
+    doc_id: str
+    EMBEDDING_SIZE: Optional[int] = Field(default=512, const=True)
     embedding: Optional[NdArrayEmbedding[EMBEDDING_SIZE]] = Field(
         is_embedding=True
     )
     content: str
-    previous: Union[Type[Section], None] = None
-    next: Union[Type[Section], None] = None
+    previous: Union[Type[Chunk], None] = None
+    next: Union[Type[Chunk], None] = None

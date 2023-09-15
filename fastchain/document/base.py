@@ -28,7 +28,7 @@ from docarray.typing import (
     AudioBytes,
 )
 
-from sections.base import Section
+from chunk.base import Chunk
 
 
 class Document(BaseDoc):
@@ -39,7 +39,7 @@ class Document(BaseDoc):
     )
     summary: Optional[str] = "NA"
     pages: DocList[Page]
-    sections: DocList[Section]
+    sections: DocList[Chunk]
     metadata: Metadata
     pdf_metadata: Optional[Dict] = None
 
@@ -57,7 +57,7 @@ class Page(BaseDoc):
 
     def __init__(self, page_number: int):
         self.page_number: int = page_number
-        self.sections: DocList[Section] = []
+        self.sections: DocList[Chunk] = []
 
     def __str__(self):
         return "\n\n------------\n\n".join(

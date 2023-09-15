@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Type
+from typing import List, Type, Callable
 from pydantic import BaseModel, Field, ValidationError, validator
 from enum import Enum
 
