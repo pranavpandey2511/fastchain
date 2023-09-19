@@ -30,6 +30,13 @@ class FastChain:
         pass
 
 
+class OpenChain:
+    """OpenChain is an open source alternative of FastCahin that uses Opensource LLMs instead of paid ones"""
+
+    def __init__(self):
+        ...
+
+
 class LLM:
     def __init__(self):
         OPENAI_API_KEY = os.enviorn.get("OPNEAI_API_KEY")

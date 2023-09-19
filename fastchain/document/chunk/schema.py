@@ -1,4 +1,4 @@
-from base import Chunk
+from fastchain.document.chunk.base import Chunk
 from docarray.typing import (
     NdArray,
     NdArrayEmbedding,
@@ -25,7 +25,7 @@ from docarray.typing import (
 from pydantic import Field, ValidationError, validator
 from typing import Optional, Tuple, Dict, List
 
-from fastchain.chunker.utils import num_tokens_from_string
+# from fastchain.chunker.utils import num_tokens_from_string
 from fastchain.constants import MAX_CHUNK_SIZE_TOKENS
 
 
@@ -36,7 +36,7 @@ class TextChunk(Chunk):
     content: str = Field(default_factory=str)
     coordinates: Optional[Tuple]
 
-    @validator("text")
+    @validator("content")
     def validate_text_length(cls, text):
         NUM_TOKENS = num_tokens_from_string(text)
         if NUM_TOKENS > MAX_CHUNK_SIZE_TOKENS:
@@ -50,12 +50,15 @@ class TextChunk(Chunk):
         return self.content
 
 
+class CodeChunk(Chunk):
+    ...
+
+
 class ImageChunk(Chunk):
     """Image Chunk class."""
 
     content_type: str = "image"
     content: ImageBytes = Field(default_factory=ImageBytes)
-    embedding: Optional[NdArrayEmbedding]
     coordinates: Optional[Tuple]
 
 
@@ -64,7 +67,6 @@ class VideoChunk(Chunk):
 
     content_type: str = "video"
     content: VideoBytes = Field(default_factory=VideoBytes)
-    embedding: Optional[NdArrayEmbedding]
     coordinates: Optional[Tuple]
 
 
@@ -73,7 +75,6 @@ class AudioChunk(Chunk):
 
     content_type: str = "audio"
     content: AudioBytes = Field(default_factory=AudioBytes)
-    embedding: Optional[NdArrayEmbedding]
 
 
 class FigureCaptionChunk(TextChunk):

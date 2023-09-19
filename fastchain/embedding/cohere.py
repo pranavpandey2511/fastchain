@@ -1,0 +1,3 @@
+class CohereEmbedding(BaseEmbedding):
+    def __init__(self):
+        ...

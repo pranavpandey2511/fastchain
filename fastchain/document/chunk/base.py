@@ -13,7 +13,8 @@ class Chunk(BaseDoc):
         description="Unique ID of the chunk.",
         alias="chunk_id",
     )
-    doc_id: str
+    doc_id: Optional[UUID4]
+    seq_id: Optional[UUID4]
     EMBEDDING_SIZE: Optional[int] = Field(default=512, const=True)
     embedding: Optional[NdArrayEmbedding[EMBEDDING_SIZE]] = Field(
         is_embedding=True

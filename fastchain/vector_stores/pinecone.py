@@ -1,1 +1,2 @@
-# ! TODO Implement pinecone vector db handler
+
+class PineconeStore(VectorStore)
