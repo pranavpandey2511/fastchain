@@ -1,0 +1,3 @@
+class ElasticSearchStore(VectorStore):
+    def __init__(self):
+        ...

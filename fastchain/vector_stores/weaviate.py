@@ -2,16 +2,24 @@ from docarray.index.backends.weaviate import (
     WeaviateDocumentIndex,
     EmbeddedOptions,
 )
+from typing import List
+
+from docarray import DocList
 import os
 from dotenv import load_dotenv
 
 from fastchain.document.chunk.base import Section
 from fastchain.indexers.base import VectorStore
+from fastchain.document.chunk.base import Chunk
 
 
 class WeaviateStore(VectorStore):
-    def __init__(self):
-        connection = self._connect_to_weaviate()
+    def __init__(self, host: str, auth_method: str = "none"):
+        self.host = host
+        self.auth_method = auth_method
+        connection = self._connect_to_store(host, auth_method)
+
+        return connection
 
     def _connect_to_store(host: str, auth_method: str = "none"):
         if auth_method == "none":
@@ -34,8 +42,29 @@ class WeaviateStore(VectorStore):
 
         doc_index = WeaviateDocumentIndex[Section](db_config=dbconfig)
 
-    def insert(self):
-        ...
+    def _create_index(self):
+        batch_config = {
+            "batch_size": 20,
+            "dynamic": False,
+            "timeout_retries": 3,
+            "num_workers": 1,
+        }
+
+        runtimeconfig = WeaviateDocumentIndex.RuntimeConfig(
+            batch_config=batch_config
+        )
+
+        self.store = WeaviateDocumentIndex[Chunk]()
+        self.store.configure(runtimeconfig)  # Batch settings being passed on
+
+    def index(self, chunks: DocList[Chunk]):
+        self.store.index(chunks)
 
     def query(self):
         ...
+
+    def update(self):
+        ...
+
+    def delete(self, doc_ids: List[int]):
+        del self.doc_index[doc_ids]

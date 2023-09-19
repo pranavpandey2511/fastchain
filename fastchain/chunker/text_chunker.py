@@ -2,9 +2,12 @@
 import os
 from typing import Callable, List, Optional
 
-from fastchain.chunker.schema import Chunker, Chunk
+from fastchain.document.chunk.schema import TextChunk
+from fastchain.chunker.base import Chunker
 from fastchain.constants import (
     DEFAULT_CHUNK_SIZE,
+    DEFAULT_TOKEN_CHUNK_OVERLAP_SIZE,
+    DEFAULT_TOKEN_CHUNK_SIZE,
     MAX_CHUNK_SIZE_TOKENS,
     DEFAULT_CHUNK_OVERLAP_SIZE,
 )
@@ -48,6 +51,7 @@ def _split_paragraphs(text: str) -> List[str]:
 
 
 def _split_sentences(text: str):
+    """Split text into sentances"""
     return sent_tokenize(text)
 
 
@@ -75,37 +79,32 @@ def _split_and_keep_separator(text: str, separator: str = "."):
 class TextChunker(Chunker, BaseModel):
     """This class is used to chunk text using text length limits."""
 
-    _chunk_size: int = Field(
-        default=DEFAULT_CHUNK_SIZE, alias="text_chunk_size"
-    )
-    _chunk_overlap: int = Field(
+    chunk_size: int = Field(default=DEFAULT_CHUNK_SIZE, alias="text_chunk_size")
+    chunk_overlap: int = Field(
         default=DEFAULT_CHUNK_OVERLAP_SIZE, alias="text_chunk_overlap"
     )
-    _length_function: Callable = Field(
-        default=len, alias="text_length_function"
-    )
+    length_function: Callable = Field(default=len, alias="text_length_function")
 
     @classmethod
     def class_name(cls) -> str:
         """Get class name."""
         return "TokenTextChunker"
 
-    def create_pages(self, texts: List[str]):
-        ...
-
     def create_chunks(self, text: str):
         paragraphs = _split_paragraphs(text)
 
 
-class TokenTextChunker(Chunker, BaseModel):
+class TokenChunker(Chunker, BaseModel):
+    """Create chunks based on MAX_TOKEN_SIZE."""
+
     _chunk_size: int = Field(
-        default=DEFAULT_CHUNK_SIZE, alias="token_chunk_size"
+        default=DEFAULT_TOKEN_CHUNK_SIZE, alias="token_chunk_size"
     )
     _chunk_overlap: int = Field(
-        default=DEFAULT_CHUNK_OVERLAP_SIZE, alias="token_chunk_overlap"
+        default=DEFAULT_TOKEN_CHUNK_OVERLAP_SIZE, alias="token_chunk_overlap"
     )
     _length_function: Callable = Field(
-        default=len, alias="text_length_function"
+        default=get_number_of_tokens, alias="text_length_function"
     )
 
     def create_chunks(self, text: str):
@@ -122,6 +121,9 @@ class TokenTextChunker(Chunker, BaseModel):
     def class_name(cls) -> str:
         """Get class name."""
         return "TokenTextChunker"
+
+    def create_chunks(self, text: str) -> List[TextChunk]:
+        ...
 
     def chunk_by_token_limit(
         self, text, token_limit, *, overlap=20, model="gpt-3.5-turbo"
@@ -305,15 +307,13 @@ class TokenTextChunker(Chunker, BaseModel):
 
         return chunks
 
-    def _postprocess_chunks(self, chunks: List[str]) -> List[str]:
-        """Post-process chunks."""
-        new_chunks = []
-        for doc in chunks:
-            if doc.replace(" ", "") == "":
-                continue
-            new_chunks.append(doc)
-        return new_chunks
 
+class SentanceChunker(Chunker, BaseModel):
+    """Create chunks by dividing text into sentances."""
 
-class TokenChunker(Chunker, BaseModel):
-    """This class is used to chunk text using token limits."""
+    num_sentances: int = Field(
+        default=DEFAULT_NUM_SENTANCES, alias="num_sentances"
+    )
+    tokenizer = Field(default=sent_tokenize, alias="tokenizer")
+    length_function: Callable = Field(default=len, alias="text_length_function")
+    overlap_size: int = Field(default=DEFAULT_SENTANCE_OVERLAP_SIZE)

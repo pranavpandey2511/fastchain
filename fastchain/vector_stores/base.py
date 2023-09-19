@@ -7,7 +7,7 @@ class VectorStore(ABC):
         ...
 
     @abstractmethod
-    def insert(self):
+    def index(self):
         ...
 
     @abstractmethod
