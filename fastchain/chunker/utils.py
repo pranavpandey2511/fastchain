@@ -97,3 +97,21 @@ def split_by_phrase_regex() -> Callable[[str], List[str]]:
     """
     regex = "[^,.;。]+[,.;。]?"
     return split_by_regex(regex)
+
+
+from tree_sitter import Node
+
+def chunk_node(node: Node, text: str, MAX_CHARS: int = 1500) -> list[str]:
+	new_chunks = []
+	current_chunk = ""
+	for child in node.children:
+		if child.end_byte - child.start_byte > MAX_CHARS:
+			new_chunks.append(current_chunk)
+			current_chunk = ""
+			new_chunks.extend(chunk_node(child, text, MAX_CHARS))
+		elif child.end_byte > MAX_CHARS:
+			new_chunks.append(current_chunk)
+			current_chunk = text[node.start_byte:node.end_byte]
+		else:
+			current_chunk += text[node.start_byte:node.end_byte]
+	return new_chunks
