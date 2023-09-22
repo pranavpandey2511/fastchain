@@ -28,7 +28,7 @@ from docarray.typing import (
     AudioBytes,
 )
 
-from chunk.base import Chunk
+from fastchain.document.chunk.base import Chunk
 
 
 class Document(BaseDoc):
@@ -37,11 +37,10 @@ class Document(BaseDoc):
         description="Unique ID of the document.",
         alias="doc_id",
     )
-    summary: Optional[str] = "NA"
+    content_summary: Optional[str] = "NA"
     pages: DocList[Page]
-    sections: DocList[Chunk]
+    chunks: DocList[Chunk]
     metadata: Metadata
-    pdf_metadata: Optional[Dict] = None
 
 
 class Page(BaseDoc):
@@ -50,14 +49,13 @@ class Page(BaseDoc):
     """
 
     _id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    doc_id: str
+    seqence_number: int
+    sections: DocList[Chunk]
 
     class Config:
         # This will allow the model to be created from a dictionary as well
         orm_mode = True
-
-    def __init__(self, page_number: int):
-        self.page_number: int = page_number
-        self.sections: DocList[Chunk] = []
 
     def __str__(self):
         return "\n\n------------\n\n".join(
