@@ -115,3 +115,18 @@ def chunk_node(node: Node, text: str, MAX_CHARS: int = 1500) -> list[str]:
 		else:
 			current_chunk += text[node.start_byte:node.end_byte]
 	return new_chunks
+
+
+def read_file_content(filename):
+    """
+    Reads the content of a file given its filename.
+
+    Args:
+    - filename (str): The name of the file (with its extension).
+
+    Returns:
+    - str: The content of the file.
+    """
+    with open(filename, 'r', encoding='utf-8') as file:
+        return file.read()
+
