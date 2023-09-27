@@ -34,7 +34,6 @@ class TextChunk(Chunk):
 
     content_type: str = "plaintext"
     content: str = Field(default_factory=str)
-    coordinates: Optional[Tuple]
 
     @validator("content")
     def validate_text_length(cls, text):
@@ -54,6 +53,7 @@ class CodeChunk(Chunk):
     """
     Code Chunk class.
     """
+
     content_type: str = "code"
     content: str = Field(default_factory=str)
 
@@ -63,7 +63,6 @@ class ImageChunk(Chunk):
 
     content_type: str = "image"
     content: ImageBytes = Field(default_factory=ImageBytes)
-    coordinates: Optional[Tuple]
 
 
 class VideoChunk(Chunk):
@@ -71,7 +70,6 @@ class VideoChunk(Chunk):
 
     content_type: str = "video"
     content: VideoBytes = Field(default_factory=VideoBytes)
-    coordinates: Optional[Tuple]
 
 
 class AudioChunk(Chunk):
@@ -90,4 +88,4 @@ class FigureCaptionChunk(TextChunk):
 class TranscribedAudioChunk(TextChunk):
     """Audio transcribed to text"""
 
-    content_type: str = "audio"
+    content_type: str = ""

@@ -38,20 +38,21 @@ class Document(BaseDoc):
         alias="doc_id",
     )
     content_summary: Optional[str] = "NA"
-    pages: DocList[Page]
-    chunks: DocList[Chunk]
+    pages: Optional[DocList[Page]]
+    chunks: Optional[DocList[Chunk]]
     metadata: Metadata
 
 
 class Page(BaseDoc):
     """A page is a collection of sections.
-    The idea is to arrange different kind of sections in a page in an orderly fashion.
+    The idea is to arrange different kind of chunks in a page in an orderly fashion.
     """
 
     _id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     doc_id: str
-    seqence_number: int
-    chunks: DocList[Chunk]
+    page_info: Field(default_factory)
+    hash_value: Optional[str]
+    chunks: Optional[DocList[Chunk]]
 
     class Config:
         # This will allow the model to be created from a dictionary as well
@@ -66,7 +67,7 @@ class Page(BaseDoc):
 class Metadata(BaseDoc):
     """Metadata class for documents."""
 
-    url: Optional[str] = None
+    path: Optional[str] = None
     total_pages: Optional[int] = None
     version: Optional[str] = None
     record_locator: Optional[

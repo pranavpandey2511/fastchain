@@ -21,10 +21,6 @@ import logging
 import logging.config
 from dotenv import load_dotenv
 
-CHUNK_OVERLAP_SIZE = 200
-CHUNKING_REGEX = "[^,.;。]+[,.;。]?"
-PARAGRAPH_REGEX = ""
-DEFUALT_PARAGRAPH_SEP = "\n\n\n"
 
 load_dotenv()
 
@@ -34,46 +30,6 @@ logging.config.fileConfig(
 
 # Get the logger specified in the file
 logger = logging.getLogger(__name__)
-
-
-# Write a function which takes a string text and divides it into paragraphs, the paragrpahs can be random in nature
-def _split_paragraphs(text: str) -> List[str]:
-    """Divide a string text into paragraphs.
-
-    Args:
-        text (str): Text to be divided
-
-    Returns:
-        List[str]: List of paragraphs
-    """
-    paragraphs = text.split("\n\n")
-    return paragraphs
-
-
-def _split_sentences(text: str):
-    """Split text into sentances"""
-    return sent_tokenize(text)
-
-
-def _split_by_sep(text: str, separator: str = "."):
-    """Split text by a separator."""
-    return text.split(separator)
-
-
-def _split_and_keep_separator(text: str, separator: str = "."):
-    """Split text by a separator and keep the separator in the splitted strings.
-
-    Args:
-        text (str): Text to be divided
-        separator (str): Separator to split the text
-
-    Returns:
-        List[str]: List of splitted strings with separator attached to the previous string
-    """
-    splitted_strings = re.split(f"({separator})", text)
-    return [
-        "".join(x) for x in zip(splitted_strings[0::2], splitted_strings[1::2])
-    ]
 
 
 class TextChunker(Chunker, BaseModel):
@@ -91,7 +47,9 @@ class TextChunker(Chunker, BaseModel):
         return "TokenTextChunker"
 
     def create_chunks(self, text: str):
-        paragraphs = _split_paragraphs(text)
+        # Divide text into paragrpahs
+        paragraphs = self._split_paragraphs(text)
+        #
 
 
 class TokenChunker(Chunker, BaseModel):
@@ -317,3 +275,7 @@ class SentanceChunker(Chunker, BaseModel):
     tokenizer = Field(default=sent_tokenize, alias="tokenizer")
     length_function: Callable = Field(default=len, alias="text_length_function")
     overlap_size: int = Field(default=DEFAULT_SENTANCE_OVERLAP_SIZE)
+
+
+class ContextAwareTextChunker(TextChunker, BaseModel):
+    """Generate context aware text chunks given any text input"""

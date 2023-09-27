@@ -60,8 +60,15 @@ class WeaviateStore(VectorStore):
     def index(self, chunks: DocList[Chunk]):
         self.store.index(chunks)
 
-    def query(self):
-        ...
+    def query(self, query: Document, top_k: int = 5):
+
+    # find similar documents
+    matches, scores = self.doc_index.find(query, limit=top_k)
+    
+    return matches, scores
+
+    
+
 
     def update(self):
         ...

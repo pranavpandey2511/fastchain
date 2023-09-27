@@ -7,21 +7,44 @@ from fastchain.chunker.utils import num_tokens_from_string
 from fastchain.constants import MAX_CHUNK_SIZE_TOKENS
 from fastchain.document.chunk.schema import Chunk
 
-ChunkType = Enum(
-    "ChunkType",
-    [
-        "TEXT",
-        "TOKENS",
-        "CODE",
-        "DOCUMENTATION",
-    ],
-)
-
 
 class Chunker(ABC):
     @abstractmethod
     def create_chunks(self, input) -> List[Chunk]:
         ...
+
+    # Write a function which takes a string text and divides it into paragraphs, the paragrpahs can be random in nature
+    def _split_paragraphs(text: str) -> List[str]:
+        """Divide a string text into paragraphs.
+
+        Args:
+            text (str): Text to be divided
+
+        Returns:
+            List[str]: List of paragraphs
+        """
+        paragraphs = text.split("\n\n")
+        return paragraphs
+
+    def _split_sentences(text: str):
+        """Split text into sentances"""
+        return sent_tokenize(text)
+
+    def _split_and_keep_separator(text: str, separator: str = "."):
+        """Split text by a separator and keep the separator in the splitted strings.
+
+        Args:
+            text (str): Text to be divided
+            separator (str): Separator to split the text
+
+        Returns:
+            List[str]: List of splitted strings with separator attached to the previous string
+        """
+        splitted_strings = re.split(f"({separator})", text)
+        return [
+            "".join(x)
+            for x in zip(splitted_strings[0::2], splitted_strings[1::2])
+        ]
 
     def _postprocess_chunks(self, chunks: List[str]) -> List[str]:
         """Post process and validate chunks."""
@@ -31,3 +54,7 @@ class Chunker(ABC):
                 continue
             updated_chunks.append(entry)
         return updated_chunks
+
+    def _split_by_sep(text: str, separator: str = "."):
+        """Split text by a separator."""
+        return text.split(separator)
