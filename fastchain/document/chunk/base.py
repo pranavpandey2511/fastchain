@@ -5,8 +5,9 @@ import uuid
 from pydantic import BaseModel, Field, validator, ValidationError
 from docarray import BaseDoc
 from docarray.typing import NdArray, NdArrayEmbedding
+from uuid import UUID as UUID4
 
-
+EMBEDDING_SIZE = 512
 class Chunk(BaseDoc):
     _id: str = Field(
         default_factory=lambda: str(uuid.uuid4()),

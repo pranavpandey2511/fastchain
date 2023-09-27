@@ -51,7 +51,11 @@ class TextChunk(Chunk):
 
 
 class CodeChunk(Chunk):
-    ...
+    """
+    Code Chunk class.
+    """
+    content_type: str = "code"
+    content: str = Field(default_factory=str)
 
 
 class ImageChunk(Chunk):

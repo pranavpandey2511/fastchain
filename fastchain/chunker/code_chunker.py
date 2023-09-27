@@ -2,11 +2,15 @@ from tree_sitter import Node
 import os
 from enum import Enum
 import subprocess
+from docarray.array import DocList
 
 from fastchain.chunker.schema import Chunker
 from tree_sitter import Parser, Language
 from dataclasses import dataclass
 from fastchain.chunker.utils import read_file_content
+from fastchain.document.chunk.schema import CodeChunk
+from fastchain.document.base import Document, Page, Metadata
+
 
 @dataclass
 class Span:
@@ -160,6 +164,7 @@ class CodeChunker(Chunker):
         self.directory_path: str = directory_path
         self.max_chunk_size = max_chunk_size
         self.coalesce = coalesce
+        self.chunks = DocList()
     
 
     def get_files_from_directory(self):
@@ -203,23 +208,34 @@ class CodeChunker(Chunker):
         for lang in languages:
             parser.set_language(languages_dict[lang])        
 
-        for file in file_list:
-            print("file", file)
+        self.pages = DocList()
+        
+        for ids, file in enumerate(file_list):
+            self.chunks = DocList()
+
             file_content = read_file_content(file)
             code_byte = bytes(file_content, "utf8")
-            print(code_byte)
 
             tree = parser.parse(code_byte)
             spans = chunker(tree, code_byte, max_chunk_size=self.max_chunk_size, coalesce=self.coalesce)
-            for s in spans:
-                print(s.extract(file_content))
-                print("---")
 
-            return True
+            for span in spans:
+                self.chunks.append(CodeChunk(content=span.extract(file_content)))
 
+            self.pages.append(
+                Page(doc_id=file, seqence_number=ids, chunks=self.chunks)
+            )
+        return self.pages
 
 
 if __name__ == "__main__":
     chunkern = CodeChunker(directory_path="/Users/aquibkhan/Desktop/test_code_chunker", 
                             max_chunk_size=500, coalesce=50)
-    print(chunkern.create_chunks())
+    pages = chunkern.create_chunks()
+    
+    for chunk in pages[0].chunks:
+        print("**************")
+        print(chunk)
+        print(chunk.content)
+        print(chunk.doc_id)
+        print("**************")

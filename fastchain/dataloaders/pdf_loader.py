@@ -14,7 +14,7 @@ from fastchain.dataloaders.chunkers.token_chunker import (
 from .base import BaseDataloader
 from docarray.array import DocList, DocVec
 from fastchain.document.base import Document, Page, Metadata
-from fastchain.document.chunk.schema import Text, Image, FigureCaption
+from fastchain.document.chunk.schema import TextChunk, Image, FigureCaption
 from utils import num_tokens_from_string, is_valid_url
 
 logger = logging.getLogger(__name__)
@@ -86,7 +86,7 @@ class PyPDFLoader(BaseDataloader):
                 )
 
                 for chunk in text_chunks:
-                    self.sections.append(Text(content=chunk))
+                    self.sections.append(TextChunk(content=chunk))
             self.pages.append(
                 Page(page_number=page_number), sections=self.sections
             )

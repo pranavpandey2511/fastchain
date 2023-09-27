@@ -51,7 +51,7 @@ class Page(BaseDoc):
     _id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     doc_id: str
     seqence_number: int
-    sections: DocList[Chunk]
+    chunks: DocList[Chunk]
 
     class Config:
         # This will allow the model to be created from a dictionary as well
@@ -59,7 +59,7 @@ class Page(BaseDoc):
 
     def __str__(self):
         return "\n\n------------\n\n".join(
-            [str(section) for section in self.sections]
+            [str(chunk) for chunk in self.chunks]
         )
 
 
