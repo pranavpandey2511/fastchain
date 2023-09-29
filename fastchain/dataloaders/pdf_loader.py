@@ -14,7 +14,11 @@ from fastchain.dataloaders.chunkers.token_chunker import (
 from .base import BaseDataloader
 from docarray.array import DocList, DocVec
 from fastchain.document.base import Document, Page, Metadata
-from fastchain.document.chunk.schema import TextChunk, Image, FigureCaption
+from fastchain.document.chunk.schema import (
+    TextChunk,
+    ImageChunk,
+    FigureCaptionChunk,
+)
 from utils import num_tokens_from_string, is_valid_url
 
 logger = logging.getLogger(__name__)
@@ -54,8 +58,8 @@ class PyPDFLoader(BaseDataloader):
             raise Exception(f"Failed to open {file_path}: {str(e)}")
 
         self.metadata = Metadata(
-            url=file_path,
-            version=kwargs.get("version", "0.0.0"),
+            path=file_path,
+            version=kwargs.get("version", "0.0.1"),
             total_pages=self.doc.page_count,
             date_created=datetime.now(),
             data_modified=datetime.now(),
@@ -93,10 +97,7 @@ class PyPDFLoader(BaseDataloader):
 
         return {
             str(self.file_path): Document(
-                pages=self.pages,
-                sections=self.sections,
                 metadata=self.metadata,
-                pdf_metadata=self.pdf_metadata,
             )
         }
 
@@ -143,25 +144,27 @@ class PdfDataLoader(BaseDataloader):
             output.update(loader.load_and_split())
         self._verify_data(output)
 
-        self.document = Document(
-            summary=self.summary,
-            pages=self.pages,
-            sections=self.sections,
-            metadata=self.metadata,
-        )
-
-        return self.document
+        return output
 
     def _verify_data(self, data: Dict) -> bool:
         for file_path, content in data.items():
             if os.path.exists(file_path):
                 if not any(content):
                     raise ValueError("No pages found in the PDF file")
-                return True
+                continue
             else:
                 raise ValueError(f"File doesn't exist {file_path}")
+        return True
 
     @staticmethod
     def _check_dir(path: str) -> bool:
         path = Path(path)
         return path.is_dir()
+
+
+def main():
+    documents = PdfDataLoader()
+
+
+if __name__ == "__main__":
+    main()

@@ -6,6 +6,7 @@ from enum import Enum
 from fastchain.chunker.utils import num_tokens_from_string
 from fastchain.constants import MAX_CHUNK_SIZE_TOKENS
 from fastchain.document.chunk.schema import Chunk
+import re
 
 
 class Chunker(ABC):
@@ -14,7 +15,7 @@ class Chunker(ABC):
         ...
 
     # Write a function which takes a string text and divides it into paragraphs, the paragrpahs can be random in nature
-    def _split_paragraphs(text: str) -> List[str]:
+    def _split_paragraphs(self, text: str) -> List[str]:
         """Divide a string text into paragraphs.
 
         Args:
@@ -23,14 +24,14 @@ class Chunker(ABC):
         Returns:
             List[str]: List of paragraphs
         """
-        paragraphs = text.split("\n\n")
+        paragraphs = text.split("\n")
         return paragraphs
 
-    def _split_sentences(text: str):
-        """Split text into sentances"""
-        return sent_tokenize(text)
+    # def _split_sentences(self, text: str):
+    #     """Split text into sentances"""
+    #     return sent_tokenize(text)
 
-    def _split_and_keep_separator(text: str, separator: str = "."):
+    def _split_and_keep_separator(self, text: str, separator: str = "."):
         """Split text by a separator and keep the separator in the splitted strings.
 
         Args:
@@ -58,3 +59,22 @@ class Chunker(ABC):
     def _split_by_sep(text: str, separator: str = "."):
         """Split text by a separator."""
         return text.split(separator)
+
+
+class Span(BaseModel):
+    start: int
+    end: int
+
+    def extract(self, s: str) -> str:
+        return "\n".join(s.splitlines()[self.start : self.end])
+
+    def __add__(self, other):
+        if isinstance(other, int):
+            return Span(self.start + other, self.end + other)
+        elif isinstance(other, Span):
+            return Span(self.start, other.end)
+        else:
+            raise NotImplementedError()
+
+    def __len__(self):
+        return self.end - self.start
