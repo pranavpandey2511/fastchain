@@ -39,7 +39,7 @@ class Document(BaseDoc):
     )
     doc_summary: Optional[str] = "NA"
     pages: Optional[DocList[Page]]
-    chunks: Optional[DocList[Chunk]]
+    chunks: DocList[Chunk]
     metadata: Metadata
 
 
@@ -49,8 +49,8 @@ class Page(BaseDoc):
     """
 
     _id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    doc_id: str
-    page_info: Optional[Dict]
+    doc_id: Optional[str]
+    page_info: Optional[str]
     hash_value: Optional[str]
     chunks: Optional[DocList[Chunk]]
 

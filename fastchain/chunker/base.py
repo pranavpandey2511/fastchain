@@ -60,8 +60,10 @@ class Chunker(ABC):
         """Split text by a separator."""
         return text.split(separator)
 
+from dataclasses import dataclass
 
-class Span(BaseModel):
+@dataclass
+class Span:
     start: int
     end: int
 

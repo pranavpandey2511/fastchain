@@ -16,13 +16,13 @@ class Chunk(BaseDoc):
         description="Unique ID of the chunk.",
         alias="chunk_id",
     )
-    document_id: UUID4
-    page_id: UUID4
+    document_id: Optional[UUID4]
+    page_id: Optional[UUID4]
     EMBEDDING_SIZE: Optional[int] = Field(const=True)
     embedding: Optional[NdArrayEmbedding[EMBEDDING_SIZE]] = Field(
         is_embedding=True
     )
     content: str
-    coordinates: tuple
+    coordinates: Optional[tuple]
     _previous: Union[Type[Chunk], None] = None
     _next: Union[Type[Chunk], None] = None

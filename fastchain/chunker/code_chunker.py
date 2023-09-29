@@ -1,3 +1,4 @@
+from __future__ import annotations
 from tree_sitter import Node
 import os
 from enum import Enum
@@ -9,7 +10,9 @@ from tree_sitter import Parser, Language
 from dataclasses import dataclass
 from fastchain.chunker.utils import read_file_content
 from fastchain.document.chunk.schema import CodeChunk
-from fastchain.document.base import Document, Page, Metadata
+from fastchain.document.base import Document, Page, Metadata, Chunk
+
+Document.update_forward_refs()
 
 
 class ProgrammingLanguage(str, Enum):
@@ -79,94 +82,13 @@ class CodeChunker(Chunker):
                 all_files.append(os.path.join(root, file))
         return all_files
 
-    def create_chunks(self):
-        # Get the file extension
-        file_list = self.get_files_from_directory()
-        print(file_list)
-        ext_list = [os.path.splitext(file)[1][len(".") :] for file in file_list]
-        unique_file_extensions = set(ext_list)
-
-        # Get the language
-        languages = [
-            extension_to_language[ext] for ext in unique_file_extensions
-        ]
-
-        try:
-            print("Trying to load languages from library")
-            languages_dict = {
-                lang: Language(f"/tmp/{lang}.so", lang) for lang in languages
-            }
-        except:
-            print("Building languages from source")
-
-            for lang in languages:
-                subprocess.run(
-                    f"git clone https://github.com/tree-sitter/tree-sitter-{lang} cache/tree-sitter-{lang}",
-                    shell=True,
-                )
-
-                Language.build_library(
-                    f"cache/build/{lang}.so", [f"cache/tree-sitter-{lang}"]
-                )
-                subprocess.run(
-                    f"cp cache/build/{lang}.so /tmp/{lang}.so", shell=True
-                )  # copying for executability
-
-            languages_dict = {
-                lang: Language(f"/tmp/{lang}.so", lang) for lang in languages
-            }
-
-        parser = Parser()
-        for lang in languages:
-            parser.set_language(languages_dict[lang])
-
-        self.pages = DocList()
-
-        for ids, file in enumerate(file_list):
-            self.chunks = DocList()
-
-            file_content = read_file_content(file)
-            code_byte = bytes(file_content, "utf8")
-
-            tree = parser.parse(code_byte)
-            spans = chunker(
-                tree,
-                code_byte,
-                max_chunk_size=self.max_chunk_size,
-                coalesce=self.coalesce,
-            )
-
-            for span in spans:
-                self.chunks.append(
-                    CodeChunk(content=span.extract(file_content))
-                )
-
-            self.pages.append(
-                Page(doc_id=file, seqence_number=ids, chunks=self.chunks)
-            )
-        return self.pages
-
-    def _get_line_number(self, index: int, source_code: str) -> int:
-        # optimized, use binary search
-        lines = source_code.splitlines(keepends=True)
-        left, right = 0, len(lines)
-        total_chars = 0
-        while left < right:
-            mid = (left + right) // 2
-            if total_chars + len(lines[mid]) > index:
-                right = mid
-            else:
-                total_chars += len(lines[mid])
-                left = mid + 1
-        return left
-
     def chunker(
         self, tree, source_code_bytes, max_chunk_size=512 * 3, coalesce=50
     ):
         # Recursively form chunks with a maximum chunk size of max_chunk_size
         def chunker_helper(node, source_code_bytes, start_position=0):
             chunks = []
-            current_chunk = Span(start_position, start_position)
+            current_chunk = Span(start=start_position, end=start_position)
             for child in node.children:
                 child_span = Span(child.start_byte, child.end_byte)
                 if len(child_span) > max_chunk_size:
@@ -225,3 +147,95 @@ class CodeChunker(Chunker):
         line_chunks = [chunk for chunk in line_chunks if len(chunk) > 0]
 
         return line_chunks
+
+    def _get_line_number(self, index: int, source_code: str) -> int:
+        # optimized, use binary search
+        lines = source_code.splitlines(keepends=True)
+        left, right = 0, len(lines)
+        total_chars = 0
+        while left < right:
+            mid = (left + right) // 2
+            if total_chars + len(lines[mid]) > index:
+                right = mid
+            else:
+                total_chars += len(lines[mid])
+                left = mid + 1
+        return left
+
+    def create_chunks(self):
+        # Get the file extension
+        file_list = self.get_files_from_directory()
+        print(file_list)
+        ext_list = [os.path.splitext(file)[1][len(".") :] for file in file_list]
+        ext_list = set(extension_to_language.keys()).intersection(set(ext_list))
+        unique_file_extensions = ext_list 
+
+        # Get the language
+        languages = [
+            extension_to_language[ext] for ext in unique_file_extensions
+        ]
+
+        try:
+            print("Trying to load languages from library")
+            languages_dict = {
+                lang: Language(f"/tmp/{lang}.so", lang) for lang in languages
+            }
+        except:
+            print("Building languages from source")
+
+            for lang in languages:
+                subprocess.run(
+                    f"git clone https://github.com/tree-sitter/tree-sitter-{lang} cache/tree-sitter-{lang}",
+                    shell=True,
+                )
+
+                Language.build_library(
+                    f"cache/build/{lang}.so", [f"cache/tree-sitter-{lang}"]
+                )
+                subprocess.run(
+                    f"cp cache/build/{lang}.so /tmp/{lang}.so", shell=True
+                )  # copying for executability
+
+            languages_dict = {
+                lang: Language(f"/tmp/{lang}.so", lang) for lang in languages
+            }
+
+        parser = Parser()
+        for lang in languages:
+            parser.set_language(languages_dict[lang])
+
+        
+        self.pages = DocList()
+        metadata_ = Metadata()
+
+        document  = Document(metadata=metadata_, chunks=DocList())
+        all_chunks = DocList()
+
+        for ids, file in enumerate(file_list):
+            self.chunks = DocList()
+
+            file_content = read_file_content(file)
+            code_byte = bytes(file_content, "utf8")
+
+            tree = parser.parse(code_byte)
+            spans = self.chunker(
+                tree,
+                code_byte,
+                max_chunk_size=self.max_chunk_size,
+                coalesce=self.coalesce,
+            )
+
+            for span in spans:
+                self.chunks.append(
+                    CodeChunk(content=span.extract(file_content))
+                )
+
+            self.pages.append(
+                Page(page_info=file, doc_id=str(ids), chunks=self.chunks)
+            )
+
+            all_chunks.append(self.chunks)
+
+        document.chunks = all_chunks
+        return document
+
