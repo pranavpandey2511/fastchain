@@ -3,7 +3,7 @@ from fastchain.chunker.code_chunker import CodeChunker
 
 def test_code_chunker():
     chunkern = CodeChunker(
-        directory_path="/Users/aquibkhan/Desktop/test_code_chunker",
+        directory_path="/Users/pranavpandey/Projects/Personal_Projects/fastchain/data/code",
         max_chunk_size=500,
         coalesce=50,
     )
