@@ -89,7 +89,7 @@ class CodeChunker(Chunker):
             chunks = []
             current_chunk = Span(start=start_position, end=start_position)
             for child in node.children:
-                child_span = Span(child.start_byte, child.end_byte)
+                child_span = Span(start=child.start_byte, end=child.end_byte)
                 if len(child_span) > max_chunk_size:
                     chunks.append(current_chunk)
                     chunks.extend(
@@ -97,7 +97,7 @@ class CodeChunker(Chunker):
                             child, source_code_bytes, child.start_byte
                         )
                     )
-                    current_chunk = Span(child.end_byte, child.end_byte)
+                    current_chunk = Span(start=child.end_byte, end=child.end_byte)
                 elif len(current_chunk) + len(child_span) > max_chunk_size:
                     chunks.append(current_chunk)
                     current_chunk = child_span
@@ -116,7 +116,7 @@ class CodeChunker(Chunker):
         # combining small chunks with bigger ones
         new_chunks = []
         i = 0
-        current_chunk = Span(0, 0)
+        current_chunk = Span(start=0, end=0)
         while i < len(chunks):
             current_chunk += chunks[i]
             if count_length_without_whitespace(
@@ -129,17 +129,17 @@ class CodeChunker(Chunker):
                 "utf-8"
             ):
                 new_chunks.append(current_chunk)
-                current_chunk = Span(chunks[i].end, chunks[i].end)
+                current_chunk = Span(start=chunks[i].end, end=chunks[i].end)
             i += 1
         if len(current_chunk) > 0:
             new_chunks.append(current_chunk)
 
         line_chunks = [
-            Span(
+            Span(start=
                 self._get_line_number(
                     chunk.start, source_code=source_code_bytes
                 ),
-                self._get_line_number(chunk.end, source_code=source_code_bytes),
+                end=self._get_line_number(chunk.end, source_code=source_code_bytes),
             )
             for chunk in new_chunks
         ]
@@ -238,3 +238,10 @@ class CodeChunker(Chunker):
         document.chunks = all_chunks
         document.pages = self.pages
         return document
+
+
+if __name__ == "__main__":
+    chunkern = CodeChunker(directory_path="/Users/aquibkhan/Desktop/test_code_chunker", 
+                            max_chunk_size=500, coalesce=50)
+    pages = chunkern.create_chunks()
+    print(pages.summary())
