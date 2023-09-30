@@ -30,40 +30,6 @@ from docarray.typing import (
 
 from fastchain.document.chunk.base import Chunk
 
-
-class Document(BaseDoc):
-    _id: str = Field(
-        default_factory=lambda: str(uuid.uuid4()),
-        description="Unique ID of the document.",
-        alias="doc_id",
-    )
-    doc_summary: Optional[str] = "NA"
-    pages: Optional[DocList[Page]]
-    chunks: DocList[Chunk]
-    metadata: Metadata
-
-
-class Page(BaseDoc):
-    """A page is a collection of sections.
-    The idea is to arrange different kind of chunks in a page in an orderly fashion.
-    """
-
-    _id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    doc_id: Optional[str]
-    page_info: Optional[str]
-    hash_value: Optional[str]
-    chunks: Optional[DocList[Chunk]]
-
-    class Config:
-        # This will allow the model to be created from a dictionary as well
-        orm_mode = True
-
-    def __str__(self):
-        return "\n\n------------\n\n".join(
-            [str(chunk) for chunk in self.chunks]
-        )
-
-
 class Metadata(BaseDoc):
     """Metadata class for documents."""
 
@@ -86,3 +52,38 @@ class Metadata(BaseDoc):
 
     def __str__(self) -> str:
         return str(self.to_dict())
+
+class Page(BaseDoc):
+    """A page is a collection of sections.
+    The idea is to arrange different kind of chunks in a page in an orderly fashion.
+    """
+
+    _id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    doc_id: Optional[str]
+    page_info: Optional[str]
+    hash_value: Optional[str]
+    chunks: Optional[DocList[Chunk]]
+
+    class Config:
+        # This will allow the model to be created from a dictionary as well
+        orm_mode = True
+
+    def __str__(self):
+        return "\n\n------------\n\n".join(
+            [str(chunk) for chunk in self.chunks]
+        )
+
+
+
+class Document(BaseDoc):
+    _id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique ID of the document.",
+        alias="doc_id",
+    )
+    doc_summary: Optional[str] = "NA"
+    pages: Optional[DocList[Page]]
+    chunks: Optional[DocList[Chunk]]
+    metadata: Metadata
+
+

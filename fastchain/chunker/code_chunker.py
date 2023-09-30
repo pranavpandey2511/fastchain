@@ -12,7 +12,6 @@ from fastchain.chunker.utils import read_file_content
 from fastchain.document.chunk.schema import CodeChunk
 from fastchain.document.base import Document, Page, Metadata, Chunk
 
-Document.update_forward_refs()
 
 
 class ProgrammingLanguage(str, Enum):
@@ -206,10 +205,10 @@ class CodeChunker(Chunker):
 
         
         self.pages = DocList()
-        metadata_ = Metadata()
-
-        document  = Document(metadata=metadata_, chunks=DocList())
         all_chunks = DocList()
+        meta_data = Metadata()
+        document  = Document(metadata=meta_data, pages=None)
+        
 
         for ids, file in enumerate(file_list):
             self.chunks = DocList()
@@ -226,16 +225,16 @@ class CodeChunker(Chunker):
             )
 
             for span in spans:
+                chnk=CodeChunk(content=span.extract(file_content))
+                all_chunks.append(chnk)
                 self.chunks.append(
-                    CodeChunk(content=span.extract(file_content))
+                    chnk
                 )
 
             self.pages.append(
                 Page(page_info=file, doc_id=str(ids), chunks=self.chunks)
             )
 
-            all_chunks.append(self.chunks)
-
         document.chunks = all_chunks
+        document.pages = self.pages
         return document
-
