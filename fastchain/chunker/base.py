@@ -70,9 +70,9 @@ class Span(BaseModel):
 
     def __add__(self, other):
         if isinstance(other, int):
-            return Span(self.start + other, self.end + other)
+            return Span(start=self.start + other, end=self.end + other)
         elif isinstance(other, Span):
-            return Span(self.start, other.end)
+            return Span(start=self.start, end=other.end)
         else:
             raise NotImplementedError()
 

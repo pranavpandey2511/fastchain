@@ -1,3 +1,4 @@
+from __future__ import annotations
 from tree_sitter import Node
 import os
 from enum import Enum
@@ -9,7 +10,8 @@ from tree_sitter import Parser, Language
 from dataclasses import dataclass
 from fastchain.chunker.utils import read_file_content
 from fastchain.document.chunk.schema import CodeChunk
-from fastchain.document.base import Document, Page, Metadata
+from fastchain.document.base import Document, Page, Metadata, Chunk
+
 
 
 class ProgrammingLanguage(str, Enum):
@@ -79,12 +81,93 @@ class CodeChunker(Chunker):
                 all_files.append(os.path.join(root, file))
         return all_files
 
+    def chunker(
+        self, tree, source_code_bytes, max_chunk_size=512 * 3, coalesce=50
+    ):
+        # Recursively form chunks with a maximum chunk size of max_chunk_size
+        def chunker_helper(node, source_code_bytes, start_position=0):
+            chunks = []
+            current_chunk = Span(start=start_position, end=start_position)
+            for child in node.children:
+                child_span = Span(start=child.start_byte, end=child.end_byte)
+                if len(child_span) > max_chunk_size:
+                    chunks.append(current_chunk)
+                    chunks.extend(
+                        chunker_helper(
+                            child, source_code_bytes, child.start_byte
+                        )
+                    )
+                    current_chunk = Span(start=child.end_byte, end=child.end_byte)
+                elif len(current_chunk) + len(child_span) > max_chunk_size:
+                    chunks.append(current_chunk)
+                    current_chunk = child_span
+                else:
+                    current_chunk += child_span
+            if len(current_chunk) > 0:
+                chunks.append(current_chunk)
+            return chunks
+
+        chunks = chunker_helper(tree.root_node, source_code_bytes)
+
+        # removing gaps
+        for prev, curr in zip(chunks[:-1], chunks[1:]):
+            prev.end = curr.start
+
+        # combining small chunks with bigger ones
+        new_chunks = []
+        i = 0
+        current_chunk = Span(start=0, end=0)
+        while i < len(chunks):
+            current_chunk += chunks[i]
+            if count_length_without_whitespace(
+                source_code_bytes[
+                    current_chunk.start : current_chunk.end
+                ].decode("utf-8")
+            ) > coalesce and "\n" in source_code_bytes[
+                current_chunk.start : current_chunk.end
+            ].decode(
+                "utf-8"
+            ):
+                new_chunks.append(current_chunk)
+                current_chunk = Span(start=chunks[i].end, end=chunks[i].end)
+            i += 1
+        if len(current_chunk) > 0:
+            new_chunks.append(current_chunk)
+
+        line_chunks = [
+            Span(start=
+                self._get_line_number(
+                    chunk.start, source_code=source_code_bytes
+                ),
+                end=self._get_line_number(chunk.end, source_code=source_code_bytes),
+            )
+            for chunk in new_chunks
+        ]
+        line_chunks = [chunk for chunk in line_chunks if len(chunk) > 0]
+
+        return line_chunks
+
+    def _get_line_number(self, index: int, source_code: str) -> int:
+        # optimized, use binary search
+        lines = source_code.splitlines(keepends=True)
+        left, right = 0, len(lines)
+        total_chars = 0
+        while left < right:
+            mid = (left + right) // 2
+            if total_chars + len(lines[mid]) > index:
+                right = mid
+            else:
+                total_chars += len(lines[mid])
+                left = mid + 1
+        return left
+
     def create_chunks(self):
         # Get the file extension
         file_list = self.get_files_from_directory()
         print(file_list)
         ext_list = [os.path.splitext(file)[1][len(".") :] for file in file_list]
-        unique_file_extensions = set(ext_list)
+        ext_list = set(extension_to_language.keys()).intersection(set(ext_list))
+        unique_file_extensions = ext_list 
 
         # Get the language
         languages = [
@@ -120,7 +203,12 @@ class CodeChunker(Chunker):
         for lang in languages:
             parser.set_language(languages_dict[lang])
 
+        
         self.pages = DocList()
+        all_chunks = DocList()
+        meta_data = Metadata()
+        document  = Document(metadata=meta_data, pages=None)
+        
 
         for ids, file in enumerate(file_list):
             self.chunks = DocList()
@@ -129,7 +217,7 @@ class CodeChunker(Chunker):
             code_byte = bytes(file_content, "utf8")
 
             tree = parser.parse(code_byte)
-            spans = chunker(
+            spans = self.chunker(
                 tree,
                 code_byte,
                 max_chunk_size=self.max_chunk_size,
@@ -137,91 +225,23 @@ class CodeChunker(Chunker):
             )
 
             for span in spans:
+                chnk=CodeChunk(content=span.extract(file_content))
+                all_chunks.append(chnk)
                 self.chunks.append(
-                    CodeChunk(content=span.extract(file_content))
+                    chnk
                 )
 
             self.pages.append(
-                Page(doc_id=file, seqence_number=ids, chunks=self.chunks)
+                Page(page_info=file, doc_id=str(ids), chunks=self.chunks)
             )
-        return self.pages
 
-    def _get_line_number(self, index: int, source_code: str) -> int:
-        # optimized, use binary search
-        lines = source_code.splitlines(keepends=True)
-        left, right = 0, len(lines)
-        total_chars = 0
-        while left < right:
-            mid = (left + right) // 2
-            if total_chars + len(lines[mid]) > index:
-                right = mid
-            else:
-                total_chars += len(lines[mid])
-                left = mid + 1
-        return left
+        document.chunks = all_chunks
+        document.pages = self.pages
+        return document
 
-    def chunker(
-        self, tree, source_code_bytes, max_chunk_size=512 * 3, coalesce=50
-    ):
-        # Recursively form chunks with a maximum chunk size of max_chunk_size
-        def chunker_helper(node, source_code_bytes, start_position=0):
-            chunks = []
-            current_chunk = Span(start_position, start_position)
-            for child in node.children:
-                child_span = Span(child.start_byte, child.end_byte)
-                if len(child_span) > max_chunk_size:
-                    chunks.append(current_chunk)
-                    chunks.extend(
-                        chunker_helper(
-                            child, source_code_bytes, child.start_byte
-                        )
-                    )
-                    current_chunk = Span(child.end_byte, child.end_byte)
-                elif len(current_chunk) + len(child_span) > max_chunk_size:
-                    chunks.append(current_chunk)
-                    current_chunk = child_span
-                else:
-                    current_chunk += child_span
-            if len(current_chunk) > 0:
-                chunks.append(current_chunk)
-            return chunks
 
-        chunks = chunker_helper(tree.root_node, source_code_bytes)
-
-        # removing gaps
-        for prev, curr in zip(chunks[:-1], chunks[1:]):
-            prev.end = curr.start
-
-        # combining small chunks with bigger ones
-        new_chunks = []
-        i = 0
-        current_chunk = Span(0, 0)
-        while i < len(chunks):
-            current_chunk += chunks[i]
-            if count_length_without_whitespace(
-                source_code_bytes[
-                    current_chunk.start : current_chunk.end
-                ].decode("utf-8")
-            ) > coalesce and "\n" in source_code_bytes[
-                current_chunk.start : current_chunk.end
-            ].decode(
-                "utf-8"
-            ):
-                new_chunks.append(current_chunk)
-                current_chunk = Span(chunks[i].end, chunks[i].end)
-            i += 1
-        if len(current_chunk) > 0:
-            new_chunks.append(current_chunk)
-
-        line_chunks = [
-            Span(
-                self._get_line_number(
-                    chunk.start, source_code=source_code_bytes
-                ),
-                self._get_line_number(chunk.end, source_code=source_code_bytes),
-            )
-            for chunk in new_chunks
-        ]
-        line_chunks = [chunk for chunk in line_chunks if len(chunk) > 0]
-
-        return line_chunks
+if __name__ == "__main__":
+    chunkern = CodeChunker(directory_path="/Users/aquibkhan/Desktop/test_code_chunker", 
+                            max_chunk_size=500, coalesce=50)
+    pages = chunkern.create_chunks()
+    print(pages.summary())
