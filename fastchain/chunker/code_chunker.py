@@ -240,8 +240,3 @@ class CodeChunker(Chunker):
         return document
 
 
-if __name__ == "__main__":
-    chunkern = CodeChunker(directory_path="/Users/aquibkhan/Desktop/test_code_chunker", 
-                            max_chunk_size=500, coalesce=50)
-    pages = chunkern.create_chunks()
-    print(pages.summary())
