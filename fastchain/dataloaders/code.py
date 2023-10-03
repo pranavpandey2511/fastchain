@@ -41,7 +41,7 @@ class CodeLoader(BaseDataloader):
                 file_contents[item['path']] = content
             elif item['type'] == 'dir':
                 file_contents.update(self._fetch_github_directory(item['url']))
-        return file_contents    
+        return file_contents
 
     def load_data(self)-> Dict:
             if self.path_type == "local":
@@ -50,7 +50,6 @@ class CodeLoader(BaseDataloader):
                 # Extract the user and repo from the GitHub URL
                 parts = self.source_path.split("https://github.com/")[-1].split("/")
                 user, repo = parts[0], parts[1]
-                
                 # Construct the API URL to fetch the directory content
                 api_url = f"https://api.github.com/repos/{user}/{repo}/contents/"
                 return self._fetch_github_directory(api_url)
