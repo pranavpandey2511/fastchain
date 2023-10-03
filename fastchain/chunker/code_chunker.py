@@ -5,6 +5,7 @@ from enum import Enum
 import subprocess
 from docarray.array import DocList
 
+from typing import Dict
 from fastchain.chunker.base import Chunker, Span
 from tree_sitter import Parser, Language
 from dataclasses import dataclass
@@ -62,29 +63,21 @@ def count_length_without_whitespace(s: str):
 
 class CodeChunker(Chunker):
     def __init__(
-        self, directory_path: str, max_chunk_size: int = 20, coalesce: int = 5
+        self, content_dict: Dict, max_chunk_size: int = 20, coalesce: int = 5
     ):
         self.parser = None
         self.language = None
-        self.directory_path: str = directory_path
+        self.content_dict = content_dict
         self.max_chunk_size = max_chunk_size
         self.coalesce = coalesce
         self.chunks = DocList()
 
-    def get_files_from_directory(self):
-        """
-        Get all files from a directory
-        """
-        all_files = []
-        for root, _, filenames in os.walk(self.directory_path):
-            for file in filenames:
-                all_files.append(os.path.join(root, file))
-        return all_files
 
     def chunker(
         self, tree, source_code_bytes, max_chunk_size=512 * 3, coalesce=50
     ):
         # Recursively form chunks with a maximum chunk size of max_chunk_size
+        # https://github.com/sweepai/sweep/blob/b267b613d4c706eaf959fe6789f11e9a856521d1/sweepai/utils/utils.py#L81
         def chunker_helper(node, source_code_bytes, start_position=0):
             chunks = []
             current_chunk = Span(start=start_position, end=start_position)
@@ -163,8 +156,7 @@ class CodeChunker(Chunker):
 
     def create_chunks(self):
         # Get the file extension
-        file_list = self.get_files_from_directory()
-        print(file_list)
+        file_list = self.content_dict.keys()
         ext_list = [os.path.splitext(file)[1][len(".") :] for file in file_list]
         ext_list = set(extension_to_language.keys()).intersection(set(ext_list))
         unique_file_extensions = ext_list 
@@ -210,11 +202,11 @@ class CodeChunker(Chunker):
         document  = Document(metadata=meta_data, pages=None)
         
 
-        for ids, file in enumerate(file_list):
+        for ids, (file, content) in enumerate(self.content_dict):
             self.chunks = DocList()
 
-            file_content = read_file_content(file)
-            code_byte = bytes(file_content, "utf8")
+            # file_content = read_file_content(file)
+            code_byte = bytes(content, "utf8")
 
             tree = parser.parse(code_byte)
             spans = self.chunker(
@@ -225,7 +217,7 @@ class CodeChunker(Chunker):
             )
 
             for span in spans:
-                chnk=CodeChunk(content=span.extract(file_content))
+                chnk=CodeChunk(content=span.extract(content))
                 all_chunks.append(chnk)
                 self.chunks.append(
                     chnk
@@ -238,5 +230,3 @@ class CodeChunker(Chunker):
         document.chunks = all_chunks
         document.pages = self.pages
         return document
-
-
