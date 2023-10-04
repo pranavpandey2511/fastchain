@@ -23,9 +23,7 @@ from docarray.typing import (
     AudioBytes,
 )
 from pydantic import Field, ValidationError, validator
-from typing import Optional, Tuple, Dict, List
-
-# from fastchain.chunker.utils import num_tokens_from_string
+from fastchain.utils import num_tokens_from_string
 from fastchain.constants import MAX_CHUNK_SIZE_TOKENS
 
 
@@ -45,9 +43,10 @@ class TextChunk(Chunk):
             )
         return text
 
-    def __str__(self):
-        return self.content
-
+    # def __str__(self):
+    #     return self.content
+    def __len__(self):
+        return len(self.content)
 
 class CodeChunk(Chunk):
     """

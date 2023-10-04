@@ -8,7 +8,6 @@ from docarray import DocList
 import os
 from dotenv import load_dotenv
 
-from fastchain.document.chunk.base import Section
 from fastchain.indexers.base import VectorStore
 from fastchain.document.chunk.base import Chunk
 
@@ -40,7 +39,7 @@ class WeaviateStore(VectorStore):
                 host="http://localhost:8080",  # Replace with your endpoint
             )
 
-        doc_index = WeaviateDocumentIndex[Section](db_config=dbconfig)
+        doc_index = WeaviateDocumentIndex[Chunk](db_config=dbconfig)
 
     def _create_index(self):
         batch_config = {
