@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Type, Callable
+from typing import List, Type, Callable, Optional
 from pydantic import BaseModel, Field, ValidationError, validator
 from enum import Enum
 
@@ -11,7 +11,7 @@ import re
 
 class Chunker(ABC):
     @abstractmethod
-    def create_chunks(self, input) -> List[Chunk]:
+    def create_chunks(self, *args, **kwargs ) -> List[Chunk]:
         ...
 
     # Write a function which takes a string text and divides it into paragraphs, the paragrpahs can be random in nature

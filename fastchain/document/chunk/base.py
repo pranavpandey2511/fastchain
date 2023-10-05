@@ -11,8 +11,8 @@ EMBEDDING_SIZE = 512
 
 
 class Chunk(BaseDoc):
-    _id: str = Field(
-        default_factory=lambda: str(uuid.uuid4()),
+    _id: UUID4 = Field(
+        default_factory=lambda: uuid.uuid4(),
         description="Unique ID of the chunk.",
         alias="chunk_id",
     )
@@ -22,7 +22,8 @@ class Chunk(BaseDoc):
     embedding: Optional[NdArrayEmbedding[EMBEDDING_SIZE]] = Field(
         is_embedding=True
     )
-    content: str
+
+    content: str = ""
     coordinates: Optional[tuple]
     _previous: Union[Type[Chunk], None] = None
     _next: Union[Type[Chunk], None] = None
