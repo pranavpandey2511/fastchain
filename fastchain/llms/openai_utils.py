@@ -1,6 +1,6 @@
 import os
 import re
-from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union
+from typing import Any, Dict, List, Optional
 
 import openai
 
