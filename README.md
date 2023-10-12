@@ -5,7 +5,7 @@
 
 `FASTCHAIN is work in progress!!`
 
-Fastchain is a librarywhich helps you build production grade LLM powered agents faster and integrate it with your existing applications.
+Fastchain is a library which helps you build production grade LLM powered agents faster and integrate it with your existing applications.
 
 ## Getting Started
 
