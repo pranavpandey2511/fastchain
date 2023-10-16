@@ -1,4 +1,9 @@
 from abc import ABC, abstractmethod
+from typing import Union
+
+from docarray import DocList
+
+from fastchain.chunker.schema import Chunk
 
 
 class VectorStore(ABC):
@@ -7,11 +12,11 @@ class VectorStore(ABC):
         ...
 
     @abstractmethod
-    def index(self):
+    def index(self, data: Union[DocList, Chunk]):
         ...
 
     @abstractmethod
-    def query(self):
+    def query_db(self):
         ...
 
     @abstractmethod
