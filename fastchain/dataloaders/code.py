@@ -44,17 +44,19 @@ class CodeLoader(BaseDataloader):
         return file_contents
 
     def load_data(self)-> Dict:
-            if self.path_type == "local":
-                return self._read_local_directory()
-            elif self.path_type == "github":
-                # Extract the user and repo from the GitHub URL
-                parts = self.source_path.split("https://github.com/")[-1].split("/")
-                user, repo = parts[0], parts[1]
-                # Construct the API URL to fetch the directory content
-                api_url = f"https://api.github.com/repos/{user}/{repo}/contents/"
-                return self._fetch_github_directory(api_url)
-            else:
-                raise ValueError("Invalid path type")
+        #TODO Check for private repos and expect auth token
+        #TODO Expand to use websites other than github as well
+        if self.path_type == "local":
+            return self._read_local_directory()
+        elif self.path_type == "github":
+            # Extract the user and repo from the GitHub URL
+            parts = self.source_path.split("https://github.com/")[-1].split("/")
+            user, repo = parts[0], parts[1]
+            # Construct the API URL to fetch the directory content
+            api_url = f"https://api.github.com/repos/{user}/{repo}/contents/"
+            return self._fetch_github_directory(api_url)
+        else:
+            raise ValueError("Invalid path type")
 
 # Example usage:
 source_path_local = "/Users/test_code_chunker"
