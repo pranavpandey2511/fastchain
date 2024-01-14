@@ -1,2 +1,3 @@
 
-class PineconeStore(VectorStore)
+class PineconeStore(VectorStore):
+    pass
